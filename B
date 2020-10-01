@@ -1,0 +1,42 @@
+import socket
+from scapy.all import *
+from scapy.layers.dns import DNS
+import sys
+
+SERVER_IP = '127.0.0.1'
+SERVER_PORT = 53
+DNS_Resolver = '8.8.8.8'
+
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock.bind((SERVER_IP,SERVER_PORT))
+
+
+while True:
+    d, client_addr = sock.recvfrom(1024)
+    client_payload = DNS(d) 
+    
+    # print('Recieved message from %s:%s :' % client_addr)
+    # print(d.decode('utf-8'))
+    # msg = 'ACK: ' + client_payload
+    # sock.sendto(bytes(msg), client_addr)
+    query = client_payload[DNS].qd.qname 
+    query = query.decode('utf-8')
+    query = query.rstrip('.')
+
+    response = sr1(IP(dst=DNS_Resolver)/UDP(dport=SERVER_PORT)/DNS(id=client_payload.id, rd=1, qd=DNSQR(qname=query)))
+    response.show()
+    sock.sendto(bytes(response[DNS]), client_addr)
+
+    # dns_req = (IP(dst=client_payload[IP].src)/UDP(dport=SERVER_PORT)/DNS(rd=1, qd=DNSQR(qname=query)))
+
+    # dns_req[DNS] = response[DNS]
+
+    # send(dns_req, verbose=0)
+
+    # answer = sr1(dns_req, verbose=0)
+
+    # sock.sendto(answer, client_addr)
+    # for x in range(answer[DNS].ancount):
+    #     print(answer[DNS].an[x].rdata)    # to return the IP address
+    #     print(answer[DNS].an[x].rrname)   # to return the response record name
+    #     print(answer[DNS].qd.qname)       # to return the original query name
